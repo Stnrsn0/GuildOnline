@@ -18,13 +18,15 @@ local function InitDB()
     if GuildOnlineDB.minimapPos == nil then
         GuildOnlineDB.minimapPos = 220 -- degrees around the minimap
     end
+    if GuildOnlineDB.radiusOffset == nil then
+        GuildOnlineDB.radiusOffset = 45 -- extra clearance past the minimap's compass points
+    end
 end
 
 ------------------------------------------------------------
 -- Helpers
 ------------------------------------------------------------
 
--- pcall-wrapped invite so a missing API on some client flavor doesn't error out
 local function InvitePlayer(name)
     if C_PartyInfo and C_PartyInfo.InviteUnit then
         C_PartyInfo.InviteUnit(name)
@@ -59,7 +61,6 @@ local function GetOnlineGuildMembers()
     for i = 1, numTotal do
         local name, _, _, level, _, zone, _, _, isOnline, _, classFileName = GetGuildRosterInfo(i)
         if name and isOnline then
-            -- strip realm suffix for display, keep full name for whisper/invite
             local shortName = Ambiguate and Ambiguate(name, "guild") or name
             table.insert(members, {
                 fullName = name,
@@ -221,12 +222,38 @@ local countText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 countText:SetPoint("BOTTOM", button, "BOTTOM", 0, 1)
 countText:SetTextColor(0.2, 1, 0.2)
 
+------------------------------------------------------------
+-- Minimap button positioning (handles round + square minimaps)
+------------------------------------------------------------
+
+local function GetMinimapShape()
+    local shape = GetMinimapShape and GetMinimapShape() or "ROUND"
+    return shape
+end
+
 local function UpdateButtonPosition()
     local angle = math.rad(GuildOnlineDB.minimapPos or 220)
-    local radius = 80
+    local minimapWidth = Minimap:GetWidth()
+    local minimapHeight = Minimap:GetHeight()
+
+    local buttonRadius = 10
+    local extraPadding = GuildOnlineDB.radiusOffset or 45
+    local radius = (math.min(minimapWidth, minimapHeight) / 2) + buttonRadius + extraPadding
+
+    local cos, sin = math.cos(angle), math.sin(angle)
+    local x, y = cos * radius, sin * radius
+
+    local shape = GetMinimapShape()
+    if shape and shape ~= "ROUND" then
+        local halfW = (minimapWidth / 2) + buttonRadius + extraPadding
+        local halfH = (minimapHeight / 2) + buttonRadius + extraPadding
+        local xClamp = math.max(-halfW, math.min(halfW, x))
+        local yClamp = math.max(-halfH, math.min(halfH, y))
+        x, y = xClamp, yClamp
+    end
+
     button:ClearAllPoints()
-    button:SetPoint("CENTER", Minimap, "CENTER",
-        radius * math.cos(angle), radius * math.sin(angle))
+    button:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
 button:SetScript("OnDragStart", function(self)
@@ -250,7 +277,6 @@ button:SetScript("OnClick", function(self, mouseButton)
         if ToggleGuildFrame then
             ToggleGuildFrame()
         else
-            RunSlashCmd = RunSlashCmd or SlashCmdList and SlashCmdList["TOGGLEGUILDTAB"]
             if SlashCmdList and SlashCmdList["TOGGLEGUILDTAB"] then
                 SlashCmdList["TOGGLEGUILDTAB"]("")
             end
@@ -314,6 +340,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         if IsInGuild() and C_GuildInfo and C_GuildInfo.GuildRoster then
             C_GuildInfo.GuildRoster()
         end
+        UpdateButtonPosition()
     elseif event == "GUILD_ROSTER_UPDATE" then
         UpdateCount()
     elseif event == "PLAYER_GUILD_UPDATE" then
@@ -327,3 +354,20 @@ C_Timer.NewTicker(30, function()
         C_GuildInfo.GuildRoster()
     end
 end)
+
+------------------------------------------------------------
+-- Slash command: /gonline radius <number>
+------------------------------------------------------------
+
+SLASH_GUILDONLINE1 = "/gonline"
+SlashCmdList["GUILDONLINE"] = function(msg)
+    local cmd, value = msg:match("^(%S*)%s*(.-)$")
+    if cmd == "radius" and tonumber(value) then
+        GuildOnlineDB.radiusOffset = tonumber(value)
+        UpdateButtonPosition()
+        print(("GuildOnline: radius offset set to %d"):format(tonumber(value)))
+    else
+        print("GuildOnline: usage /gonline radius <number>  (current: " ..
+            (GuildOnlineDB.radiusOffset or 45) .. ")")
+    end
+end
