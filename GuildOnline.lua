@@ -19,7 +19,7 @@ local function InitDB()
         GuildOnlineDB.minimapPos = 220 -- degrees around the minimap
     end
     if GuildOnlineDB.radiusOffset == nil then
-        GuildOnlineDB.radiusOffset = 45 -- extra clearance past the minimap's compass points
+        GuildOnlineDB.radiusOffset = -5 -- extra clearance past the minimap's compass points
     end
 end
 
@@ -207,7 +207,12 @@ button:SetFrameLevel(8)
 button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 button:RegisterForDrag("LeftButton")
 
-local icon = button:CreateTexture(nil, "BACKGROUND")
+local bg = button:CreateTexture(nil, "BACKGROUND")
+bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+bg:SetSize(20, 20)
+bg:SetPoint("CENTER", 0, 1)
+
+local icon = button:CreateTexture(nil, "ARTWORK")
 icon:SetTexture("Interface\\GuildBankFrame\\UI-GuildBankFrame-BuyTab")
 icon:SetTexCoord(0.15, 0.85, 0.15, 0.85)
 icon:SetSize(20, 20)
@@ -242,7 +247,7 @@ local function UpdateButtonPosition()
     local minimapHeight = Minimap:GetHeight()
 
     local buttonRadius = 10
-    local extraPadding = GuildOnlineDB.radiusOffset or 45
+    local extraPadding = GuildOnlineDB.radiusOffset or -5
     local radius = (math.min(minimapWidth, minimapHeight) / 2) + buttonRadius + extraPadding
 
     local cos, sin = math.cos(angle), math.sin(angle)
@@ -373,6 +378,6 @@ SlashCmdList["GUILDONLINE"] = function(msg)
         print(("GuildOnline: radius offset set to %d"):format(tonumber(value)))
     else
         print("GuildOnline: usage /gonline radius <number>  (current: " ..
-            (GuildOnlineDB.radiusOffset or 45) .. ")")
+            (GuildOnlineDB.radiusOffset or -5) .. ")")
     end
 end
