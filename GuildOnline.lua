@@ -261,10 +261,6 @@ local function UpdateButtonPosition()
     button:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
-    button:ClearAllPoints()
-    button:SetPoint("CENTER", Minimap, "CENTER", x, y)
-end
-
 button:SetScript("OnDragStart", function(self)
     self:SetScript("OnUpdate", function(self)
         local mx, my = Minimap:GetCenter()
