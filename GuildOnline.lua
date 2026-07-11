@@ -94,11 +94,20 @@ panel:SetBackdropColor(0, 0, 0, 0.95)
 
 local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOPLEFT", 10, -8)
-title:SetText("Guild Online")
+title:SetText("Guild Online") -- placeholder, updated dynamically
 
 local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 hint:SetText("Shift-click: whisper   Ctrl-click: invite")
+
+local function UpdatePanelTitle()
+    if IsInGuild() then
+        local guildName = GetGuildInfo("player")
+        title:SetText(guildName or "Guild Online")
+    else
+        title:SetText("Guild Online")
+    end
+end
 
 local rowPool = {}
 
@@ -139,6 +148,8 @@ local function GetRow(index)
 end
 
 local function RefreshPanel()
+    UpdatePanelTitle()
+
     local members = GetOnlineGuildMembers()
     local count = #members
 
@@ -326,6 +337,7 @@ local function UpdateCount()
     end
     local _, numOnline = GetNumGuildMembers()
     countText:SetText(numOnline or 0)
+    UpdatePanelTitle()
 
     if panel:IsShown() then
         RefreshPanel()
