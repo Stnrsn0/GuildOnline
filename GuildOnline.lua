@@ -226,9 +226,14 @@ countText:SetTextColor(0.2, 1, 0.2)
 -- Minimap button positioning (handles round + square minimaps)
 ------------------------------------------------------------
 
-local function GetMinimapShape()
-    local shape = GetMinimapShape and GetMinimapShape() or "ROUND"
-    return shape
+-- capture Blizzard's real function BEFORE defining our own local with the same name
+local Blizzard_GetMinimapShape = GetMinimapShape
+
+local function GetMapShape()
+    if Blizzard_GetMinimapShape then
+        return Blizzard_GetMinimapShape()
+    end
+    return "ROUND"
 end
 
 local function UpdateButtonPosition()
@@ -243,7 +248,7 @@ local function UpdateButtonPosition()
     local cos, sin = math.cos(angle), math.sin(angle)
     local x, y = cos * radius, sin * radius
 
-    local shape = GetMinimapShape()
+    local shape = GetMapShape()
     if shape and shape ~= "ROUND" then
         local halfW = (minimapWidth / 2) + buttonRadius + extraPadding
         local halfH = (minimapHeight / 2) + buttonRadius + extraPadding
@@ -251,6 +256,10 @@ local function UpdateButtonPosition()
         local yClamp = math.max(-halfH, math.min(halfH, y))
         x, y = xClamp, yClamp
     end
+
+    button:ClearAllPoints()
+    button:SetPoint("CENTER", Minimap, "CENTER", x, y)
+end
 
     button:ClearAllPoints()
     button:SetPoint("CENTER", Minimap, "CENTER", x, y)
