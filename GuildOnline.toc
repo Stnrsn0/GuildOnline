@@ -1,0 +1,9 @@
+## Interface: 120007
+## Title: Guild Online
+## Notes: Minimap button showing online guild members. Click to open guild panel, shift-click a name to whisper, ctrl-click to invite.
+## Author: Paladintom and Claude AI
+## Version: 1.0
+## SavedVariables: GuildOnlineDB
+## IconTexture: Interface\GuildBankFrame\UI-GuildBankFrame-BuyTab
+
+GuildOnline.lua
